@@ -11,39 +11,55 @@ interface Pokemon {
   image: string;
 }
 
+interface PokemonBasicInfo {
+  name: string;
+  url: string;
+}
+
 function App(){
   const tiltRef = useRef<HTMLDivElement>(null);
   const [style, setStyle] = useState<React.CSSProperties>({});
-
   const [pokemon, setPokemon] = useState<Pokemon[]>([]);
+  const [pokemonCount, setPokemonCount] = useState(0);
+  const [offset, setOffset] = useState(0);
+  const numberOfPokemons = 8;
 
   useEffect(() => {
     const fetchPokemons = async () => {
-      const numberOfPokemons = 8; // Defina quantos Pokémon você quer buscar
-      let fetchedPokemons: Pokemon[] = [];
-
-      for (let i = 1; i <= numberOfPokemons; i++) {
-        const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${i}`);
-        const data = await response.json();
-
-        const pokemon: Pokemon = {
-          name: data.name,
-          // Ajuste aqui para mapear corretamente para o formato esperado pela interface
-          types: data.types.map((typeInfo: { type: { name: string } }) => ({
-            type: typeInfo.type
+      // URL inicial para buscar um lote de Pokémon
+      const listResponse = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=${numberOfPokemons}&offset=${offset}`);
+      const listData = await listResponse.json();
+  
+      // Busca detalhes completos para cada Pokémon no lote
+      const detailsPromises = listData.results.map(async (pokemonBasicInfo: PokemonBasicInfo) => {
+        const detailResponse = await fetch(pokemonBasicInfo.url);
+        const pokemonDetail = await detailResponse.json();
+        setPokemonCount(listData.count);
+  
+        return {
+          name: pokemonDetail.name,
+          types: pokemonDetail.types.map((typeInfo: { type: { name: string } }) => ({
+            type: typeInfo.type // Mantém a estrutura conforme a interface
           })),
-          image: data.sprites.front_default,
+          image: pokemonDetail.sprites.front_default,
         };
-
-        fetchedPokemons.push(pokemon);
-      }
-
-      console.log(fetchedPokemons);
+      });
+  
+      // Aguarda todas as promessas serem resolvidas e atualiza o estado
+      const fetchedPokemons: Pokemon[] = await Promise.all(detailsPromises);
       setPokemon(fetchedPokemons);
     };
-
+  
     fetchPokemons();
-  }, []);
+  }, [offset, numberOfPokemons]);
+
+  const goToNextPage = () => {
+    setOffset(prev => prev + numberOfPokemons);
+  };
+
+  const goToPreviousPage = () => {
+    setOffset(prev => Math.max(0, prev - numberOfPokemons)); // Evita números negativos
+  };
 
   const typeToBackgroundColor : Record<string, string> = {
   
@@ -51,8 +67,19 @@ function App(){
     fire: 'bg-red-400',
     grass: 'bg-green-400',
     electric: 'bg-yellow-300',
-    psychic: 'bg-purple-400',
-    normal: 'bg-gray-400',
+    psychic: 'bg-rose-500',
+    normal: 'bg-orange-600',
+    bug: 'bg-emerald-500',
+    fairy: 'bg-pink-500',
+    poison: 'bg-fuchsia-600',
+    ground: 'bg-yellow-500',
+    fighting: 'bg-gray-500',
+    rock: 'bg-stone-900',
+    ghost: 'bg-violet-900',
+    ice: 'bg-indigo-600',
+    dragon: 'bg-cyan-600',
+    dark: 'bg-rose-950',
+    steel: 'bg-slate-700',
     // Adicione mais tipos e cores conforme necessário
   };
 
@@ -91,9 +118,10 @@ function App(){
 
    return(
   <div className={`App min-h-screen bg-gray-700 flex flex-row justify-center items-center`}>
-    {/* <div className="bg-purple-500 w-20 h-80">
-
-    </div> */}
+    <div className="bg-purple-500 w-20 h-80 rounded-l-md flex flex-col justify-center items-center">
+    <img src={`/left_arrow.svg`} alt="Right Arrow" className={`mt-0 rounded-full0 ${offset === 0 ? 'hidden' : ''}`}
+    onClick={goToPreviousPage}/>
+    </div>
 
     <div 
     ref={tiltRef}
@@ -133,9 +161,10 @@ function App(){
   </div>
     </div> 
 
-    {/* <div className="bg-purple-500 w-20 h-80">
-
-    </div>      */}
+   <div className="bg-purple-500 w-20 h-80 rounded-r-md flex flex-col justify-center items-center">
+   <img src={`/right_arrow.svg`} alt="Right Arrow" className={`mt-0 rounded-full ${offset + numberOfPokemons >= pokemonCount ? 'hidden' : ''}`}
+   onClick={goToNextPage}/>
+    </div>      
   </div>
   )
 }
