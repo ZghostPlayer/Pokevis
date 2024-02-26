@@ -17,8 +17,6 @@ interface PokemonBasicInfo {
 }
 
 function App(){
-  const tiltRef = useRef<HTMLDivElement>(null);
-  const [style, setStyle] = useState<React.CSSProperties>({});
   const [pokemon, setPokemon] = useState<Pokemon[]>([]);
   const [pokemonCount, setPokemonCount] = useState(0);
   const [offset, setOffset] = useState(0);
@@ -106,37 +104,29 @@ function App(){
     // Adicione mais tipos e cores conforme necessário
   };
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!tiltRef.current) return;
-  
-    const { left, top, width, height } = tiltRef.current.getBoundingClientRect();
-    const centerX = (left + width / 2);
-    const centerY = (top + height / 2);
-    const mouseX = e.clientX - centerX;
-    const mouseY = e.clientY - centerY;
-    const rotateX = (mouseY / height) * 20; // Ajuste conforme necessário
-    const rotateY = (mouseX / width) * -20; // Ajuste conforme necessário
-    const brightness = 100 + Math.abs(mouseX / width) * 20; // Ajusta o brilho
-  
-    // Calcula a sombra com base na posição do mouse
-    const shadowX = (mouseX / width) * 20;
-    const shadowY = (mouseY / height) * 20;
-  
-    setStyle({
-      transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
-      boxShadow: `${shadowX}px ${shadowY}px 20px rgba(0,0,0,0.5)`,
-      filter: `brightness(${brightness}%)`
-    });
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>, index: number) => {
+    console.log(event)
+    const cardRef = cardRefs.current[index];
+    if (!cardRef) return;
+
+    const { left, top, width, height } = cardRef.getBoundingClientRect();
+    const centerX = left + width / 2;
+    const centerY = top + height / 2;
+    const mouseX = event.clientX - centerX;
+    const mouseY = event.clientY - centerY;
+
+    const rotateX = (mouseY / height) * 200;
+    const rotateY = (mouseX / width) * 200;
+
+    cardRef.style.transform = `rotateY(${rotateY}deg) rotateX(${rotateX}deg)`;
   };
 
-  const handleMouseLeave = () => {
-    // Redefine os estilos para valores padrão
-    setStyle({
-      transform: 'rotateX(0deg) rotateY(0deg)', // Volta para a posição original
-      boxShadow: 'none', // Remove a sombra
-      filter: 'brightness(100%)', // Redefine o brilho
-      transition: 'transform 0.5s, box-shadow 0.5s, filter 0.5s', // Transição suave
-    });
+  const handleMouseLeave = (index : number) => {
+    const cardRef = cardRefs.current[index];
+    if (!cardRef) return;
+    cardRef.style.transform = 'rotateY(0deg) rotateX(0deg)';
   };
 
    return(
@@ -150,14 +140,9 @@ function App(){
     }}/>
     </div>
 
-    <div 
-    ref={tiltRef}
-    onMouseMove={handleMouseMove}
-    onMouseLeave={handleMouseLeave}
-    style={style}
-    className="card">
-      <div className="grid grid-cols-4 gap-4 p-2"> {/* Ajuste o grid-cols conforme necessário */}
-      {pokemon.map((pokemonItem, index) => {          
+    <div className="w-fit h-fit bg-purple-600 rounded-lg">
+      <div className="card grid grid-cols-4 gap-4 p-2"> {/* Ajuste o grid-cols conforme necessário */}
+      {pokemon.map((pokemonItem, index) => {         
 
           // Atribuição defensiva da cor de fundo
           let backgroundColor = 'bg-gray-200'; // Valor padrão
@@ -166,10 +151,14 @@ function App(){
             backgroundColor = typeToBackgroundColor[firstType] || 'bg-gray-200';
           }
 
-          //console.log("Cor de fundo:", backgroundColor);
-
           return (
-            <div key={index} className="bg-white p-2 flex flex-col items-center justify-center rounded-lg shadow">
+            <div 
+            key={index}
+            ref={(el) => (cardRefs.current[index] = el)}
+            onMouseMove={(e) => handleMouseMove(e, index)}
+            onMouseLeave={() => handleMouseLeave(index)}
+            className="card_2"
+             >              
               <div className="w-full bg-gray-800 text-white text-center py-1 rounded-t-lg">
                 <h3 className="text-md font-semibold">{pokemonItem.name.toUpperCase()}</h3>
               </div>

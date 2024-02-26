@@ -18,9 +18,25 @@
 }
 
 .card {
-    width: 50%; 
-    height: 23rem; 
+    min-width: 1000px; 
+    min-width: 600px; 
     background-color: purple;
-    transition: transform 0.1s, box-shadow 0.1s, filter 0.1s;
     border-radius: 0.500rem;
+    perspective: 1000px;
   }
+
+.card_2{
+    perspective: 1000px;
+    transition: transform 0.5s, box-shadow 0.5s, filter 0.5s;
+  --tw-bg-opacity: 1;
+    background-color: rgb(255 255 255 / var(--tw-bg-opacity));
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    --tw-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --tw-shadow-colored: 0 1px 3px 0 var(--tw-shadow-color), 0 1px 2px -1px var(--tw-shadow-color);
+    box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
