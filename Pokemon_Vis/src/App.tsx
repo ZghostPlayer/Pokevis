@@ -24,6 +24,7 @@ function App(){
   const [offset, setOffset] = useState(0);
   const [isClickedLeftArrow, setIsClickedLeftArrow] = useState(false);
   const [isClickedRightArrow, setIsClickedRightArrow] = useState(false);
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const numberOfPokemons = 8;
 
   useEffect(() => {
@@ -56,15 +57,31 @@ function App(){
   }, [offset, numberOfPokemons]);
 
   const goToNextPage = () => {
+    if(isButtonDisabled) return;
+
+    setIsButtonDisabled(true)
+
     setOffset(prev => prev + numberOfPokemons);
     setIsClickedRightArrow(true)
     setTimeout(() => setIsClickedRightArrow(false), 500);
+
+    setTimeout(() => {
+      setIsButtonDisabled(false)
+    }, 500);
   };
 
   const goToPreviousPage = () => {
+    if(isButtonDisabled) return;
+
+    setIsButtonDisabled(true);
+
     setOffset(prev => Math.max(0, prev - numberOfPokemons)); // Evita números negativos
     setIsClickedLeftArrow(true)
     setTimeout(() => setIsClickedLeftArrow(false), 500);
+
+    setTimeout(() => {
+      setIsButtonDisabled(false)
+    }, 500);
   };
 
   const typeToBackgroundColor : Record<string, string> = {
@@ -126,7 +143,11 @@ function App(){
   <div className={`App min-h-screen bg-gray-700 flex flex-row justify-center items-center`}>
     <div className="bg-purple-500 w-20 h-80 rounded-l-md flex flex-col justify-center items-center">
     <img src={`/left_arrow.svg`} alt="Left Arrow" className={isClickedLeftArrow ? 'animate-click' : `mt-0 rounded-full ${offset === 0 ? 'hidden' : ''} `}
-    onClick={goToPreviousPage}/>
+    onClick={() => {
+      if (offset > 0 && !isButtonDisabled) {
+        goToPreviousPage();
+      }
+    }}/>
     </div>
 
     <div 
@@ -166,7 +187,11 @@ function App(){
 
    <div className="bg-purple-500 w-20 h-80 rounded-r-md flex flex-col justify-center items-center">
    <img src={`/right_arrow.svg`} alt="Right Arrow" className={isClickedRightArrow ? 'animate-click' : `mt-0 rounded-full ${offset + numberOfPokemons >= pokemonCount ? 'hidden' : ''}`}
-   onClick={goToNextPage}/>
+   onClick={() => {
+    if (offset + numberOfPokemons < pokemonCount && !isButtonDisabled) {
+      goToNextPage();
+    }
+  }}/>
     </div>      
   </div>
   )
