@@ -2,6 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes clickAnimation {
+  from, to {
+    filter: none;
+  }
+  50% {
+    filter: brightness(0) invert(1);
+  }
+}
+
+.animate-click {
+  animation: clickAnimation 0.5s ease;
+  margin-top: 0px;
+  border-radius: 9999px;
+}
+
 .card {
     width: 50%; 
     height: 23rem; 

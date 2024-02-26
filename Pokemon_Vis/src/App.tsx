@@ -22,6 +22,8 @@ function App(){
   const [pokemon, setPokemon] = useState<Pokemon[]>([]);
   const [pokemonCount, setPokemonCount] = useState(0);
   const [offset, setOffset] = useState(0);
+  const [isClickedLeftArrow, setIsClickedLeftArrow] = useState(false);
+  const [isClickedRightArrow, setIsClickedRightArrow] = useState(false);
   const numberOfPokemons = 8;
 
   useEffect(() => {
@@ -55,10 +57,14 @@ function App(){
 
   const goToNextPage = () => {
     setOffset(prev => prev + numberOfPokemons);
+    setIsClickedRightArrow(true)
+    setTimeout(() => setIsClickedRightArrow(false), 500);
   };
 
   const goToPreviousPage = () => {
     setOffset(prev => Math.max(0, prev - numberOfPokemons)); // Evita números negativos
+    setIsClickedLeftArrow(true)
+    setTimeout(() => setIsClickedLeftArrow(false), 500);
   };
 
   const typeToBackgroundColor : Record<string, string> = {
@@ -119,7 +125,7 @@ function App(){
    return(
   <div className={`App min-h-screen bg-gray-700 flex flex-row justify-center items-center`}>
     <div className="bg-purple-500 w-20 h-80 rounded-l-md flex flex-col justify-center items-center">
-    <img src={`/left_arrow.svg`} alt="Right Arrow" className={`mt-0 rounded-full0 ${offset === 0 ? 'hidden' : ''}`}
+    <img src={`/left_arrow.svg`} alt="Left Arrow" className={isClickedLeftArrow ? 'animate-click' : `mt-0 rounded-full ${offset === 0 ? 'hidden' : ''} `}
     onClick={goToPreviousPage}/>
     </div>
 
@@ -130,10 +136,7 @@ function App(){
     style={style}
     className="card">
       <div className="grid grid-cols-4 gap-4 p-2"> {/* Ajuste o grid-cols conforme necessário */}
-      {pokemon.map((pokemonItem, index) => {
-          // Corrigindo o acesso à propriedade types para cada Pokémon individual
-          console.log(pokemonItem.types[0].type.name);
-          
+      {pokemon.map((pokemonItem, index) => {          
 
           // Atribuição defensiva da cor de fundo
           let backgroundColor = 'bg-gray-200'; // Valor padrão
@@ -162,7 +165,7 @@ function App(){
     </div> 
 
    <div className="bg-purple-500 w-20 h-80 rounded-r-md flex flex-col justify-center items-center">
-   <img src={`/right_arrow.svg`} alt="Right Arrow" className={`mt-0 rounded-full ${offset + numberOfPokemons >= pokemonCount ? 'hidden' : ''}`}
+   <img src={`/right_arrow.svg`} alt="Right Arrow" className={isClickedRightArrow ? 'animate-click' : `mt-0 rounded-full ${offset + numberOfPokemons >= pokemonCount ? 'hidden' : ''}`}
    onClick={goToNextPage}/>
     </div>      
   </div>
