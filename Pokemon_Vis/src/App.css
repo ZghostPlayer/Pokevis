@@ -68,3 +68,12 @@
   max-height: 90%;
   overflow-y: auto;
 }
+
+.back {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  backface-visibility: hidden;
+}

@@ -10,17 +10,29 @@ interface pokemonStats{
   base_stat: number
 }
 
+interface pokemonAbilities{
+  url: string
+  details?: AbilityDetail;
+}
+
 interface Pokemon {
   name: string;
   types: PokemonType[];
   image: string;
   stat: pokemonStats[];
+  abilities: pokemonAbilities[];
 }
 
 interface PokemonBasicInfo {
   name: string;
   url: string;
 }
+
+interface AbilityDetail {
+  name: string;
+  effect: string;
+}
+
 
 function App(){
   const [pokemon, setPokemon] = useState<Pokemon[]>([]);
@@ -30,40 +42,78 @@ function App(){
   const [isClickedRightArrow, setIsClickedRightArrow] = useState(false);
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const [expandedPokemon, setExpandedPokemon] = useState<Pokemon | null>(null);
+  const [expandedCardRotation, setExpandedCardRotation] = useState(0);
   const numberOfPokemons = 8;
 
   useEffect(() => {
+
     const fetchPokemons = async () => {
-      // URL inicial para buscar um lote de Pokémon
       const listResponse = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=${numberOfPokemons}&offset=${offset}`);
       const listData = await listResponse.json();
   
-      // Busca detalhes completos para cada Pokémon no lote
+      setPokemonCount(listData.count);
+
       const detailsPromises = listData.results.map(async (pokemonBasicInfo: PokemonBasicInfo) => {
         const detailResponse = await fetch(pokemonBasicInfo.url);
         const pokemonDetail = await detailResponse.json();
-        setPokemonCount(listData.count);
+  
+        const abilitiesPromises = pokemonDetail.abilities.map(async (abilitiesInfo: { ability: { url: string } }) => {
+          const details = await fetchAbilityDetails(abilitiesInfo.ability.url);
+          return {
+            url: abilitiesInfo.ability.url,
+            details: details
+          };
+        });
+        const abilitiesDetails = await Promise.all(abilitiesPromises);
   
         return {
           name: pokemonDetail.name,
           types: pokemonDetail.types.map((typeInfo: { type: { name: string } }) => ({
-            type: typeInfo.type.name // Mantém a estrutura conforme a interface
+            type: typeInfo.type.name
           })),
           image: pokemonDetail.sprites.front_default,
-          stat: pokemonDetail.stats.map((statInfo: {stat: {name: string}; base_stat: number }) => ({
+          stat: pokemonDetail.stats.map((statInfo: { stat: { name: string }; base_stat: number }) => ({
             stat: statInfo.stat.name,
             base_stat: statInfo.base_stat
-          }))
+          })),
+          abilities: abilitiesDetails
         };
       });
   
-      // Aguarda todas as promessas serem resolvidas e atualiza o estado
       const fetchedPokemons: Pokemon[] = await Promise.all(detailsPromises);
       setPokemon(fetchedPokemons);
+
+    //   fetchedPokemons.forEach(pokemon => {
+    //     console.log(`Pokemon: ${pokemon.name}`);
+    //     pokemon.abilities.forEach(ability => {
+    //       if (ability.details) {
+    //         console.log(`Ability Name: ${ability.details.name}, Effect: ${ability.details.effect}`);
+    //       } else {
+    //         console.log('Ability details not loaded yet');
+    //       }
+    //     });
+    //   });
     };
   
     fetchPokemons();
   }, [offset, numberOfPokemons]);
+
+  const fetchAbilityDetails = async (url: string): Promise<AbilityDetail> => {
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+  
+      const name = data.name;
+      const effectEntry = data.effect_entries.find((entry: any) => entry.language.name === 'en');
+      const effect = effectEntry ? effectEntry.short_effect : ''; // Ajuste aqui
+  
+      return { name, effect };
+    } catch (error) {
+      console.error('Error fetching ability details:', error);
+      return { name: '', effect: '' };
+    }
+  };
+  
 
   const goToNextPage = () => {
     if(isButtonDisabled) return;
@@ -71,6 +121,7 @@ function App(){
     setIsButtonDisabled(true)
 
     setOffset(prev => prev + numberOfPokemons);
+    console.log(offset)
     setIsClickedRightArrow(true)
     setTimeout(() => setIsClickedRightArrow(false), 500);
 
@@ -97,25 +148,33 @@ function App(){
     setExpandedPokemon(pokemon);
   };
 
+  const expandedCardHandleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.buttons === 1) { // Verifica se o botão esquerdo do mouse está pressionado
+      const rotationSpeed = 0.5; // Velocidade de rotação (ajuste conforme necessário)
+      const deltaX = event.movementX; // Movimento horizontal do mouse
+      const newRotation = expandedCardRotation + deltaX * rotationSpeed;
+      setExpandedCardRotation(newRotation);
+    }
+  };
+
   const typeToBackgroundColor : Record<string, string> = {
-  
     water: 'bg-blue-400',
-    fire: 'bg-red-400',
-    grass: 'bg-green-400',
-    electric: 'bg-yellow-300',
-    psychic: 'bg-rose-500',
-    normal: 'bg-orange-600',
-    bug: 'bg-emerald-500',
-    fairy: 'bg-pink-500',
-    poison: 'bg-fuchsia-600',
-    ground: 'bg-yellow-500',
-    fighting: 'bg-gray-500',
-    rock: 'bg-stone-900',
-    ghost: 'bg-violet-900',
-    ice: 'bg-indigo-600',
-    dragon: 'bg-cyan-600',
-    dark: 'bg-rose-950',
-    steel: 'bg-slate-700',
+    fire: 'bg-red-500',
+    grass: 'bg-green-500',
+    electric: 'bg-yellow-400',
+    psychic: 'bg-purple-500',
+    normal: 'bg-gray-400',
+    bug: 'bg-lime-500',
+    fairy: 'bg-pink-400',
+    poison: 'bg-violet-600',
+    ground: 'bg-amber-600',
+    fighting: 'bg-red-700',
+    rock: 'bg-yellow-800',
+    ghost: 'bg-indigo-700',
+    ice: 'bg-blue-300',
+    dragon: 'bg-orange-500',
+    dark: 'bg-gray-800',
+    steel: 'bg-blueGray-600',
     // Adicione mais tipos e cores conforme necessário
   };
 
@@ -141,6 +200,70 @@ function App(){
     // Adicione mais tipos e cores conforme necessário
   };
 
+  const typeToImageSymbol : Record<string, string> = {
+    water: `water_symbol.jpg`,
+    fire: `fire_symbol.jpg`,
+    grass: `grass_symbol.jpg`,
+    electric: 'eletric_symbol.jpg',
+    psychic: 'psychic_symbol.jpg',
+    normal: 'normal_symbol.jpg',
+    bug: 'bug_symbol.jpg',
+    fairy: 'fairy_symbol.jpg',
+    poison: 'poison_symbol.jpg',
+    ground: 'ground_symbol.jpg',
+    fighting: 'fighting_symbol.jpg',
+    rock: 'rock_symbol.jpg',
+    ghost: 'ghost_symbol.jpg',
+    ice: 'ice_symbol.jpg',
+    dragon: 'dragon_symbol.jpg',
+    dark: 'dark_symbol.jpg',
+    steel: 'steel_symbol.jpg',
+  };
+
+  const typeToBackgroundTheme : Record<string, string> = {
+    water: 'from-blue-400',
+    fire: 'from-red-500',
+    grass: 'from-green-500',
+    electric: 'from-yellow-400',
+    psychic: 'from-purple-500',
+    normal: 'from-gray-400',
+    bug: 'from-lime-500',
+    fairy: 'from-pink-400',
+    poison: 'from-violet-600',
+    ground: 'from-amber-600',
+    fighting: 'from-red-700',
+    rock: 'from-yellow-800',
+    ghost: 'from-indigo-700',
+    ice: 'from-blue-300',
+    dragon: 'from-orange-500',
+    dark: 'from-gray-800',
+    steel: 'from-blueGray-600',
+    // Adicione mais tipos e cores conforme necessário
+  };
+
+  const elementAltDescription : Record<string, string> = {
+    water: 'Water symbol',
+    fire: 'Fire symbol',
+    grass: 'Grass symbol',
+    electric: 'Eletric symbol',
+    psychic: 'Psychic symbol',
+    normal: 'Normal symbol',
+    bug: 'Bug symbol',
+    fairy: 'Fairy symbol',
+    poison: 'Poison symbol',
+    ground: 'Ground symbol',
+    fighting: 'Fighting symbol',
+    rock: 'Rock symbol',
+    ghost: 'Ghost symbol',
+    ice: 'Ice symbol',
+    dragon: 'Dragon symbol',
+    dark: 'Dark symbol',
+    steel: 'Steel symbol',
+    // Adicione mais tipos e cores conforme necessário
+  };
+
+  
+
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>, index: number) => {
@@ -159,16 +282,37 @@ function App(){
     cardRef.style.transform = `rotateY(${rotateY}deg) rotateX(${rotateX}deg)`;
   };
 
-  if(expandedPokemon !== null){
-  console.log(expandedPokemon)
-  console.log(expandedPokemon.stat[0].stat)
-  console.log(expandedPokemon.stat[0].base_stat)
-  }
+  const handleExpandedMouseDown = () => {
+    document.addEventListener('mousemove', handleExpandedMouseMove);
+    document.addEventListener('mouseup', handleExpandedMouseUp);
+  };
+  
+  const handleExpandedMouseMove = (event: MouseEvent) => {
+    if (event.buttons === 1) {
+      const rotationSpeed = 0.5;
+      const deltaX = event.movementX;
+      setExpandedCardRotation((prevRotation) => prevRotation + deltaX * rotationSpeed);
+    }
+  };
+  
+  const handleExpandedMouseUp = () => {
+    document.removeEventListener('mousemove', handleExpandedMouseMove);
+    document.removeEventListener('mouseup', handleExpandedMouseUp);
+  };
+
+  console.log("Offset:", offset);
+  console.log("Number of Pokemons:", numberOfPokemons);
+  console.log("Pokemon Count:", pokemonCount);
+  const isLastPage = offset + numberOfPokemons >= pokemonCount;
+  console.log("Is Last Page:", isLastPage);
 
 
   const expanded = expandedPokemon?.types[0].type || 'bg-gray-200'
   const backgroundColors = typeToBackgroundColor[expanded]
   const backgroundImage = typeToBackgroundImage[expanded]
+  const symbolImage = typeToImageSymbol[expanded]
+  const backgroundTheme = typeToBackgroundTheme[expanded]
+  const eAltDescription = elementAltDescription[expanded]
 
 
   const handleMouseLeave = (index : number) => {
@@ -178,7 +322,7 @@ function App(){
   };
 
    return(
-  <div className={`App min-h-screen bg-gray-700 flex flex-row justify-center items-center`}>
+  <div className={`App min-h-screen bg-gray-700 flex flex-row justify-center items-center`} onMouseDown={handleExpandedMouseDown}>
     <div className="bg-purple-500 w-20 h-80 rounded-l-md flex flex-col justify-center items-center">
     <img src={`/left_arrow.svg`} alt="Left Arrow" className={isClickedLeftArrow ? 'animate-click' : `mt-0 rounded-full ${offset === 0 ? 'hidden' : ''} `}
     onClick={() => {
@@ -231,14 +375,23 @@ function App(){
     </div>  
 
     {expandedPokemon && (
-  <div className="expandedPokemonOverlay" onClick={() => setExpandedPokemon(null)}>
-    <div className={`expandedPokemonCard bg-gradient-to-r from-indigo-600`}  onClick={e => e.stopPropagation()}>
-      <div className='flex justify-between items-center' style={{
+  <div className="expandedPokemonOverlay">
+    <div 
+    className={`expandedPokemonCard bg-gradient-to-r ${backgroundTheme}`}
+      onClick={e => e.stopPropagation()}
+      onContextMenu={e => e.preventDefault()}
+      onMouseMove={expandedCardHandleMouseMove}
+      style={{
+        transform: `rotateY(${expandedCardRotation}deg)`,
+        transition: 'transform 0.1s',
+        userSelect: 'none'
+      }}>
+    <div className="front" style={{ display: (expandedCardRotation % 360 < 90 || (expandedCardRotation % 360 > 270 && expandedCardRotation % 360 < 360)) ? 'block' : 'none' }}>
+      <div> <button onClick={() => setExpandedPokemon(null)}>Close</button> </div>
+      <div className='flex justify-between items-center w-full h-10 z-10' style={{
         fontFamily: 'serif',
         fontSize: 40,
         backgroundColor: 'gray',
-        width: 360,
-        height: 60
       }}>
       <h2 className="flex-1">{expandedPokemon.name.toUpperCase()}</h2>
   <div className="flex items-center">
@@ -257,29 +410,49 @@ function App(){
         height: 200,
       }} />
       </div>
-      <div style={{
-        fontFamily: 'serif',
-        fontSize: 30,
-        backgroundColor: 'gray',
-        width: 360,
-        height: 60
+      <div className="flex justify-between items-center w-full h-10" style={{
+      fontFamily: 'serif',
+      fontSize: 30,
+      backgroundColor: 'gray',
       }}>
-      <p className='text-lg'>Type: {expandedPokemon.types[0].type}</p>
-      <img className='w-10 h-10' src={`/fire_type.svg`} alt="Fire Simbol"></img>
-      </div>
-      <button onClick={() => setExpandedPokemon(null)}>Close</button>
-      <div className="flex justify-between items-end bg-gray-100 w-full h-80 pb-1">
-      <div>
-      <b className="text-xs">{expandedPokemon.stat[1].stat}:</b>
-      <b className="text-4xl bg-red-600 rounded-full">{expandedPokemon.stat[1].base_stat}</b>
-      </div>
-      <div>
-      <b className="text-xs">{expandedPokemon.stat[2].stat}:</b>
-      <b className="text-4xl bg-blue-600 rounded-full">{expandedPokemon.stat[2].base_stat}</b>
-      </div>
+      <p className="text-lg">type: <b className="text-xl">{expandedPokemon.types[0].type}</b></p>
+      <img className="w-8 h-8 mr-3 rounded-full" src={symbolImage} alt={eAltDescription} />
+    </div>
+
+      <div className="flex flex-col justify-between bg-gray-300 w-full min-h-72 h-auto py-2">
+        <div className="abilities">
+          {expandedPokemon.abilities.map((ability, index) => (
+            <div key={index} className="ability">
+              <p className="text-sm">Name: <b>{ability.details?.name.toUpperCase()}</b></p>
+              <p className="text-sm">Effect: {ability.details?.effect}</p>
+              <br></br>
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-between items-end w-full h-20">
+          <div>
+            <b className="text-xs">{expandedPokemon.stat[1].stat}:</b>
+            <b className="text-4xl bg-red-600 rounded-full">{expandedPokemon.stat[1].base_stat}</b>
+          </div>
+          <div>
+            <b className="text-xs">{expandedPokemon.stat[2].stat}:</b>
+            <b className="text-4xl bg-blue-600 rounded-full">{expandedPokemon.stat[2].base_stat}</b>
+          </div>
+        </div>
       </div>
       {/* Inclua mais detalhes conforme necessário */}
-      
+      </div>
+      <div className="back" style={{  display: expandedCardRotation % 360 >= 90 && expandedCardRotation % 360 < 270 ? 'block' : 'none'}}>
+       <img
+       src="/Card_Back.jpg"
+      alt="Parte de trás"
+      style={{
+      width: '100%',
+      height: '100%',
+      objectFit: 'cover'
+    }}
+  />
+</div>
     </div>
   </div>
 )}    
