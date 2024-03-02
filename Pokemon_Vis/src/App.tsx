@@ -308,7 +308,6 @@ function App(){
 
 
   const expanded = expandedPokemon?.types[0].type || 'bg-gray-200'
-  const backgroundColors = typeToBackgroundColor[expanded]
   const backgroundImage = typeToBackgroundImage[expanded]
   const symbolImage = typeToImageSymbol[expanded]
   const backgroundTheme = typeToBackgroundTheme[expanded]
