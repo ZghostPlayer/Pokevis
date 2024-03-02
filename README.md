@@ -11,7 +11,7 @@
   <h2>Como começar?</h2>
         <p>Para mergulhar no mundo dos Pokémon com nosso projeto, siga os passos abaixo:</p>
         <ol>
-            <li>Clone o repositório: <code>git clone https://seu-repositorio-aqui.git</code></li>
+            <li>Clone o repositório</li>
             <li>Instale as dependências: <code>npm install</code></li>
             <li>Inicie o servidor de desenvolvimento: <code>npm start</code></li>
         </ol>
